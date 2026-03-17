@@ -1,0 +1,23 @@
+paths:
+  base:
+    workspace: .
+    repo: ..
+
+  project_root: ..
+  git_result: ../test/UnitTestResults
+  unit_execution_folder: utExecutionAndResults/utUnderTest
+  unit_execution_folder_test: utExecutionAndResults/utUnderTest/test
+  unit_execution_folder_build: utExecutionAndResults/utUnderTest/build
+  unit_result_folder: utExecutionAndResults/utResults
+  docker_mount_source: .
+  unit_test_root: ../test/unitTest
+
+  sw_cmp:
+    repo_root: ..
+    misra_rules_path: misra/misra_c_2012_headlines.txt
+    template_path: CMakeLists.txt
+
+    build_dir: build
+    report_file: test/cppcheck_misra_results.html
+    cfg_dir: cfg
+    pltf_dir: dev
