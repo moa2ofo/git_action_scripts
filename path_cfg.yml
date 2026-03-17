@@ -15,7 +15,7 @@ paths:
   sw_cmp:
     repo_root: ../dev
     misra_rules_path: misra/misra_c_2012_headlines.txt
-    template_path: ../dev/CMakeLists.txt
+    template_path: CMakeLists.txt
 
     build_dir: build
     report_file: test/cppcheck_misra_results.html
