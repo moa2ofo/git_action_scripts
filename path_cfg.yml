@@ -1,8 +1,4 @@
 paths:
-  base:
-    workspace: .
-    repo: ..
-
   project_root: ..
   git_result: ../test/UnitTestResults
   unit_execution_folder: utExecutionAndResults/utUnderTest
@@ -11,13 +7,14 @@ paths:
   unit_result_folder: utExecutionAndResults/utResults
   docker_mount_source: .
   unit_test_root: ../test/unitTest
-
-  sw_cmp:
-    repo_root: ../dev
-    misra_rules_path: misra/misra_c_2012_headlines.txt
-    template_path: CMakeLists.txt
-
-    build_dir: build
-    report_file: test/cppcheck_misra_results.html
-    cfg_dir: cfg
-    pltf_dir: pltf
+  sw_cmp_repo_root: ../dev
+  sw_cmp_misra_rules_path: misra/misra_c_2012_headlines.txt
+  sw_cmp_template_path: CMakeLists.txt
+  sw_cmp_workspace_build_dir: build
+  sw_cmp_repo_build_dir: ../dev/build
+  sw_cmp_workspace_report_file: cppcheck_misra_results.html
+  sw_cmp_repo_report_file: ../cppcheck_misra_results.html
+  sw_cmp_workspace_cfg_dir: cfg
+  sw_cmp_repo_cfg_dir: ../dev/cfg
+  sw_cmp_workspace_pltf_dir: pltf
+  sw_cmp_repo_pltf_dir: ../dev/pltf
