@@ -523,7 +523,7 @@ def update_total_result_report(build_folder: Path, function_name: str, report_fo
     header = "function_name,test_name,status,linesCvrg,branchesCvrg"
     lines_out = [header] + [row.to_csv_line() for row in rows.values()]
     summary_file.write_text("\n".join(lines_out) + "\n", encoding="utf-8")
-    print(rows)
+
     info(f"Updated summary for {len(test_files)} test results → {summary_file}")
 
 
@@ -574,7 +574,9 @@ def format_total_result_report(report_folder: Path):
 
 def run_and_collect_results(module: UnitModule):
     function_name = module.function_name
-    update_unit_under_test(module, function_name)
+    #update_unit_under_test(module, function_name)
+    clear_folder(UNIT_EXECUTION_FOLDER)
+    copy_folder_contents(module.test_case_folder, UNIT_EXECUTION_FOLDER)
     split_unity_tests(UNIT_EXECUTION_FOLDER_TEST)
     run_cmd(DOCKER_CLEAN, check=True)
     run_cmd(DOCKER_BASE + ["ceedling", f"gcov:all"], check=True, stopScript=False)
