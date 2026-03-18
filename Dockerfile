@@ -44,7 +44,12 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # symlink for libclang expected by python bindings
-RUN ln -s /usr/lib/llvm-17/lib/libclang.so /usr/lib/libclang.so || true
+RUN LIBCLANG=$(find /usr/lib -name "libclang.so" | head -n 1) && \
+    if [ -n "$LIBCLANG" ]; then \
+        ln -sf "$LIBCLANG" /usr/local/lib/libclang.so; \
+    else \
+        echo "libclang.so not found" >&2; exit 1; \
+    fi
 
 # ------------------------------------------------------------
 # PlantUML setup
