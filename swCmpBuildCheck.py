@@ -277,6 +277,7 @@ tbody tr:hover td {
 
 def generate_cppcheck_html_reports(root_folder: Union[str, Path], misra_rules_path: Union[str, Path]) -> None:
     root = Path(root_folder).resolve()
+    root = root.parent
     for xml_path in root.rglob("*"):
         if xml_path.is_file() and xml_path.name in ("cppcheck_misra_results.mxl", "cppcheck_misra_results.xml"):
             try:
