@@ -1,6 +1,6 @@
 
 
-FROM ubuntu:24.04
+FROM ubuntu:24.04-minimal
 
 ENV DEBIAN_FRONTEND=noninteractive
 
