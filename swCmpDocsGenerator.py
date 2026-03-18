@@ -26,7 +26,7 @@ from common_utils import (
 
 IMAGE_NAME = "doxygen-plantuml"
 
-TEMPLATE_DOCKERFILE_PRIMARY = "DoxDockerfile"
+TEMPLATE_DOCKERFILE_PRIMARY = "Dockerfile"
 TEMPLATE_DOXYFILE_PRIMARY = "Doxygen"
 TEMPLATE_DOCKERFILE_FALLBACK = "Dockerfile"
 TEMPLATE_DOXYFILE_FALLBACK = "Doxyfile"

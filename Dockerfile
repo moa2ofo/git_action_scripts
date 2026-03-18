@@ -2,16 +2,18 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# ------------------------------------------------------------
+# Common install: toolchain, Python, dev tools + doxygen/graphviz/java
+# ------------------------------------------------------------
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        # toolchains + build
+        # build & toolchain
         build-essential \
         cmake \
         ninja-build \
         gcc \
         g++ \
         git \
-        ca-certificates \
         pkg-config \
         bear \
         # clang/llvm stack
@@ -21,9 +23,9 @@ RUN apt-get update && \
         clang-tools \
         clang-tidy \
         clang-format \
-        # cppcheck + MISRA addon usage
+        # cppcheck + MISRA addon
         cppcheck \
-        # python + libclang for tooling that needs it
+        # python + libclang
         python3 \
         python3-pip \
         python3-setuptools \
@@ -33,14 +35,43 @@ RUN apt-get update && \
         python3-pygments \
         python3-clang-17 \
         libclang-17-dev \
+        # doxygen + graphviz + Java for PlantUML
+        ca-certificates \
+        doxygen \
+        graphviz \
+        openjdk-17-jre-headless \
+        wget \
     && rm -rf /var/lib/apt/lists/*
 
-# symlink for libclang (useful for Python bindings that expect /usr/lib/libclang.so)
+# symlink for libclang expected by python bindings
 RUN ln -s /usr/lib/llvm-17/lib/libclang.so /usr/lib/libclang.so || true
+
+# ------------------------------------------------------------
+# PlantUML setup
+# ------------------------------------------------------------
+ENV PLANTUML_VERSION=1.2024.3
+ENV PLANTUML_HOME=/opt/plantuml
+ENV PLANTUML_JAR=/opt/plantuml/plantuml.jar
+
+RUN mkdir -p ${PLANTUML_HOME} && \
+    wget -q \
+      https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar \
+      -O ${PLANTUML_JAR}
+
+RUN printf '%s\n' \
+    '#!/bin/sh' \
+    'exec java -jar /opt/plantuml/plantuml.jar "$@"' \
+    > /usr/local/bin/plantuml && \
+    chmod +x /usr/local/bin/plantuml
+
+# quick sanity check
+RUN doxygen --version && plantuml -version && dot -V
 
 WORKDIR /workspace
 
-# MISRA addon configuration
+# ------------------------------------------------------------
+# MISRA addon config
+# ------------------------------------------------------------
 RUN mkdir -p /opt/misra && \
     cat <<'EOF' > /opt/misra/misra.json
 {
@@ -90,7 +121,9 @@ echo "MISRA analysis completed. XML saved to ${PROJ_DIR}/cppcheck_misra_results.
 EOF
 RUN chmod +x /usr/local/bin/run-misra-check.sh
 
-# Bulk build + MISRA sweep helper
+# ------------------------------------------------------------
+# Bulk build + MISRA sweep
+# ------------------------------------------------------------
 RUN cat <<'EOF' > /usr/local/bin/build-and-check-all.sh
 #!/usr/bin/env bash
 set -euo pipefail
@@ -148,7 +181,7 @@ echo "All projects under ${ROOT_DIR} processed." >&2
 EOF
 RUN chmod +x /usr/local/bin/build-and-check-all.sh
 
-# Normalize line endings in case files were generated on Windows
+# normalize line endings
 RUN find /usr/local/bin -type f -exec sed -i 's/\r$//' {} \;
 
 CMD ["/bin/bash"]
