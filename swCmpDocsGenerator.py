@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-
+import os
 import re
 import shutil
 import subprocess
 from pathlib import Path
-from path_config_loader import load_paths
 import sys
-from typing import  List, Tuple
+from typing import Optional, List, Tuple
 
 from common_utils import (
     info, warn, error, fatal,
@@ -27,7 +26,7 @@ from common_utils import (
 
 IMAGE_NAME = "doxygen-plantuml"
 
-TEMPLATE_DOCKERFILE_PRIMARY = "Dockerfile"
+TEMPLATE_DOCKERFILE_PRIMARY = "DoxDockerfile"
 TEMPLATE_DOXYFILE_PRIMARY = "Doxygen"
 TEMPLATE_DOCKERFILE_FALLBACK = "Dockerfile"
 TEMPLATE_DOXYFILE_FALLBACK = "Doxyfile"
@@ -64,10 +63,8 @@ def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: 
 
 
 def main():
-    paths = load_paths(__file__)
-
-    script_dir = paths.script_dir
-    codebase_root = paths.sw_cmp_repo_root
+    script_dir = Path(__file__).resolve().parent
+    codebase_root = script_dir.parent / "dev"
 
     template_dockerfile = resolve_template(script_dir, TEMPLATE_DOCKERFILE_PRIMARY, TEMPLATE_DOCKERFILE_FALLBACK)
     template_doxyfile = resolve_template(script_dir, TEMPLATE_DOXYFILE_PRIMARY, TEMPLATE_DOXYFILE_FALLBACK)
