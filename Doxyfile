@@ -1,0 +1,40 @@
+# Project
+PROJECT_NAME           = "projectName Doc"
+OUTPUT_DIRECTORY       = ./docs
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+
+# Inputs (IMPORTANT: single INPUT line, or use +=)
+INPUT                  = ./cfg ./pltf
+FILE_PATTERNS          = *.c *.h
+RECURSIVE              = YES
+
+# Extract more content (helps "missing docs")
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXTRACT_PRIVATE        = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+
+# Graphviz (DOT) diagrams
+HAVE_DOT               = YES
+UML_LOOK               = YES
+TEMPLATE_RELATIONS     = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+DIRECTORY_GRAPH        = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+
+# Warning
+WARNINGS = YES
+WARN_IF_UNDOCUMENTED = YES
+WARN_IF_DOC_ERROR = YES
+
+# PlantUML
+PLANTUML_JAR_PATH      = /opt/plantuml
+
+# (Optional but useful if you use @startuml blocks inside comments)
+# MARKDOWN_SUPPORT     = YES
