@@ -119,13 +119,23 @@ def main():
             run_cmd(["docker", "build", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
 
             mount = docker_mount_path(target_dir)
-            info(f"[Docker] Running doxygen with mount: {mount} -> /workspace")
-            run_cmd([
-                "docker", "run", "--rm",
-                "-v", f"{mount}:/workspace",
-                IMAGE_NAME,
-                "doxygen", "Doxyfile"
-            ], cwd=target_dir, check=True)
+
+            info(f"[Docker] Building image in: {target_dir}")
+
+            try:
+                run_cmd(["docker", "build", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
+                mount = docker_mount_path(target_dir)
+                info(f"[Docker] Running doxygen with mount: {mount} -> /workspace")
+
+                run_cmd([
+                    "docker", "run", "--rm",
+                    "-v", f"{mount}:/workspace",
+                    IMAGE_NAME
+                ], cwd=target_dir, check=True)
+
+            except Exception as e:
+                error(f"[Docker ERROR] {e}")
+                return  
 
             info("[OK] Documentation generated.")
             ok_targets.append(target_dir)
