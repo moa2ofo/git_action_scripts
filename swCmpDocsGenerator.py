@@ -3,13 +3,14 @@
 
 from __future__ import annotations
 
-import os
+
 import re
 import shutil
 import subprocess
 from pathlib import Path
 import sys
-from typing import Optional, List, Tuple
+from typing import  List, Tuple
+from path_config_loader import load_paths
 
 from common_utils import (
     info, warn, error, fatal,
@@ -26,13 +27,9 @@ from common_utils import (
 
 IMAGE_NAME = "doxygen-plantuml"
 
-TEMPLATE_DOCKERFILE_PRIMARY = "DoxDockerfile"
-TEMPLATE_DOXYFILE_PRIMARY = "Doxygen"
-TEMPLATE_DOCKERFILE_FALLBACK = "Dockerfile"
-TEMPLATE_DOXYFILE_FALLBACK = "Doxyfile"
 
-DEST_DOCKERFILE = "Dockerfile"
-DEST_DOXYFILE = "Doxyfile"
+DOCKERFILE = "Dockerfile"
+DOXYFILE = "Doxyfile"
 
 
 def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: bool) -> None:
@@ -63,11 +60,14 @@ def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: 
 
 
 def main():
-    script_dir = Path(__file__).resolve().parent
-    codebase_root = script_dir.parent / "dev"
+    paths = load_paths(__file__)
+    script_dir = paths.script_dir
+    codebase_root = paths.sw_cmp_repo_root
+    print(script_dir)
+    print(codebase_root)
 
-    template_dockerfile = resolve_template(script_dir, TEMPLATE_DOCKERFILE_PRIMARY, TEMPLATE_DOCKERFILE_FALLBACK)
-    template_doxyfile = resolve_template(script_dir, TEMPLATE_DOXYFILE_PRIMARY, TEMPLATE_DOXYFILE_FALLBACK)
+    template_dockerfile = script_dir / DOCKERFILE
+    template_doxyfile = script_dir / DOXYFILE
 
 
     info(f"Template Dockerfile : {template_dockerfile}")
@@ -89,8 +89,8 @@ def main():
         has_cfg = (target_dir / "cfg").is_dir()
         project_name = target_dir.parent.name
 
-        dest_dockerfile = target_dir / DEST_DOCKERFILE
-        dest_doxyfile = target_dir / DEST_DOXYFILE
+        dest_dockerfile = target_dir / DOCKERFILE
+        dest_doxyfile = target_dir / DOXYFILE
 
         docker_backup = None
         doxy_backup = None
@@ -103,11 +103,11 @@ def main():
 
         try:
             if dest_dockerfile.exists():
-                docker_backup = target_dir / (DEST_DOCKERFILE + ".bak")
+                docker_backup = target_dir / (DOCKERFILE + ".bak")
                 shutil.move(str(dest_dockerfile), str(docker_backup))
 
             if dest_doxyfile.exists():
-                doxy_backup = target_dir / (DEST_DOXYFILE + ".bak")
+                doxy_backup = target_dir / (DOXYFILE + ".bak")
                 shutil.move(str(dest_doxyfile), str(doxy_backup))
 
             shutil.copy2(str(template_dockerfile), str(dest_dockerfile))
@@ -120,7 +120,12 @@ def main():
 
             mount = docker_mount_path(target_dir)
             info(f"[Docker] Running doxygen with mount: {mount} -> /workspace")
-            run_cmd(["docker", "run", "--rm", "-v", f"{mount}:/workspace", IMAGE_NAME], cwd=target_dir, check=True)
+            run_cmd([
+                "docker", "run", "--rm",
+                "-v", f"{mount}:/workspace",
+                IMAGE_NAME,
+                "doxygen", "Doxyfile"
+            ], cwd=target_dir, check=True)
 
             info("[OK] Documentation generated.")
             ok_targets.append(target_dir)
