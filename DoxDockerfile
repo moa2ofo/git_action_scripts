@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ------------------------------------------------------------
+# Install only what is needed for:
+# - doxygen (docs generation)
+# - graphviz (dot diagrams)
+# - plantuml (UML diagrams)
+# ------------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        doxygen \
+        graphviz \
+        openjdk-17-jre-headless \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# PlantUML (pinned jar)
+# ------------------------------------------------------------
+ENV PLANTUML_VERSION=1.2024.3
+ENV PLANTUML_HOME=/opt/plantuml
+ENV PLANTUML_JAR=/opt/plantuml/plantuml.jar
+
+RUN mkdir -p ${PLANTUML_HOME} && \
+    wget -q \
+      https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar \
+      -O ${PLANTUML_JAR}
+
+# "plantuml" command
+RUN printf '%s\n' \
+    '#!/bin/sh' \
+    'exec java -jar /opt/plantuml/plantuml.jar "$@"' \
+    > /usr/local/bin/plantuml && \
+    chmod +x /usr/local/bin/plantuml
+
+# Quick sanity checks
+RUN doxygen --version && plantuml -version && dot -V
+
+WORKDIR /workspace
+
+# Default: run doxygen on the mounted project
+CMD ["doxygen", "Doxyfile"]

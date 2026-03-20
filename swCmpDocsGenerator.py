@@ -33,8 +33,10 @@ DOXYFILE = "Doxyfile"
 
 
 def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: bool) -> None:
+    # Read existing Doxyfile
     content = doxy_path.read_text(encoding="utf-8", errors="replace")
 
+    # Force PROJECT_NAME to the target folder name
     if re.search(r"^\s*PROJECT_NAME\s*=", content, flags=re.MULTILINE):
         content = re.sub(
             r"^\s*PROJECT_NAME\s*=.*$",
@@ -43,48 +45,57 @@ def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: 
             flags=re.MULTILINE,
         )
     else:
+        # If missing, prepend it
         content = f'PROJECT_NAME           = "{project_name}"\n' + content
 
+    # Build INPUT path list based on available subfolders
     inputs = []
     if has_cfg:
         inputs.append("./cfg")
     if has_pltf:
         inputs.append("./pltf")
 
+    # Override INPUT line
     input_line = "INPUT                  = " + " ".join(inputs)
-
     content = re.sub(r"^\s*INPUT\s*=.*$\n?", "", content, flags=re.MULTILINE)
     content = input_line + "\n" + content
 
+    # Write patched file
     doxy_path.write_text(content, encoding="utf-8")
 
+import time
 
 def main():
     paths = load_paths(__file__)
     script_dir = paths.script_dir
     codebase_root = paths.sw_cmp_repo_root
-    print(script_dir)
-    print(codebase_root)
 
     template_dockerfile = script_dir / DOCKERFILE
     template_doxyfile = script_dir / DOXYFILE
-
 
     info(f"Template Dockerfile : {template_dockerfile}")
     info(f"Template Doxyfile   : {template_doxyfile}")
     info(f"Scanning targets in : {codebase_root}")
 
+    # Find all targets
     targets = list(find_targets_with_subfolders(codebase_root, ("pltf", "cfg")))
+    # Filter out CMakeFiles
+    targets = [t for t in targets if "CMakeFiles" not in t.parts]
+
     if not targets:
         warn("No folders found containing 'pltf' or 'cfg'. Nothing to do.")
         return
 
-    ok_targets: List[Path] = []
-    fail_targets: List[Tuple[Path, str]] = []
-    #exclude the folder of CMakeFiles
-    targets = [t for t in targets if "CMakeFiles" not in t.parts]
-    print(targets)
-    for target_dir in targets:
+    total = len(targets)
+    print(f"\n=== Found {total} valid targets ===\n")
+
+    ok_targets = []
+    fail_targets = []
+
+    for idx, target_dir in enumerate(targets, start=1):
+        print(f"\n>>> [{idx}/{total}] Processing target: {target_dir}")
+        start_time = time.time()
+
         has_pltf = (target_dir / "pltf").is_dir()
         has_cfg = (target_dir / "cfg").is_dir()
         project_name = target_dir.parent.name
@@ -95,13 +106,8 @@ def main():
         docker_backup = None
         doxy_backup = None
 
-        print("------------------------------------------------------------")
-        info(f"Target: {target_dir}")
-        info(f"  - has cfg : {has_cfg}")
-        info(f"  - has pltf: {has_pltf}")
-        info(f"  - PROJECT_NAME -> {project_name}")
-
         try:
+            # Backups
             if dest_dockerfile.exists():
                 docker_backup = target_dir / (DOCKERFILE + ".bak")
                 shutil.move(str(dest_dockerfile), str(docker_backup))
@@ -110,56 +116,51 @@ def main():
                 doxy_backup = target_dir / (DOXYFILE + ".bak")
                 shutil.move(str(dest_doxyfile), str(doxy_backup))
 
-            shutil.copy2(str(template_dockerfile), str(dest_dockerfile))
-            shutil.copy2(str(template_doxyfile), str(dest_doxyfile))
+            # Copy templates
+            shutil.copy2(template_dockerfile, dest_dockerfile)
+            shutil.copy2(template_doxyfile, dest_doxyfile)
 
-            patch_doxyfile(dest_doxyfile, project_name, has_pltf=has_pltf, has_cfg=has_cfg)
+            # Patch Doxyfile
+            patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
-            info(f"[Docker] Building image in: {target_dir}")
+            print("   - Building Docker image...")
             run_cmd(["docker", "build", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
 
             mount = docker_mount_path(target_dir)
+            print(f"   - Running Doxygen in Docker (mount: {mount})")
 
-            info(f"[Docker] Building image in: {target_dir}")
+            run_cmd([
+                "docker", "run", "--rm",
+                "-v", f"{mount}:/workspace",
+                IMAGE_NAME,
+                "doxygen", "/workspace/Doxyfile"
+            ], cwd=target_dir, check=True)
 
-            try:
-                run_cmd(["docker", "build", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
-                mount = docker_mount_path(target_dir)
-                info(f"[Docker] Running doxygen with mount: {mount} -> /workspace")
-
-                run_cmd([
-                    "docker", "run", "--rm",
-                    "-v", f"{mount}:/workspace",
-                    IMAGE_NAME
-                ], cwd=target_dir, check=True)
-
-            except Exception as e:
-                error(f"[Docker ERROR] {e}")
-                return  
-
-            info("[OK] Documentation generated.")
+            info("   [OK] Documentation generated.")
             ok_targets.append(target_dir)
 
         except subprocess.CalledProcessError as e:
             msg = f"Command failed (exit={e.returncode})"
-            error(f"[FAIL] {target_dir}: {msg}")
+            error(f"   [FAIL] {target_dir}: {msg}")
             fail_targets.append((target_dir, msg))
 
         except Exception as e:
             msg = f"Unexpected error: {repr(e)}"
-            error(f"[FAIL] {target_dir}: {msg}")
+            error(f"   [FAIL] {target_dir}: {msg}")
             fail_targets.append((target_dir, msg))
 
         finally:
+            # Cleanup
             safe_unlink(dest_dockerfile)
             safe_unlink(dest_doxyfile)
             safe_restore(docker_backup, dest_dockerfile)
             safe_restore(doxy_backup, dest_doxyfile)
-            info("[Cleanup] Done.\n")
+            print("   - Cleanup done.")
 
-        print_summary('SUMMARY', ok_targets, fail_targets)
+        elapsed = time.time() - start_time
+        print(f"<<< Completed [{idx}/{total}] in {elapsed:.1f}s")
+
+    print_summary("FINAL SUMMARY", ok_targets, fail_targets)
     sys.exit(exit_code_from_failures(fail_targets))
-
-
 if __name__ == "__main__":
     main()
