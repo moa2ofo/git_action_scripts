@@ -16,6 +16,12 @@ EXTRACT_PRIVATE        = YES
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = YES
 
+
+# Generale
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+ENABLE_PREPROCESSING   = YES
+
 # Graphviz (DOT) diagrams
 HAVE_DOT               = YES
 UML_LOOK               = YES
@@ -27,6 +33,7 @@ CALLER_GRAPH           = YES
 DIRECTORY_GRAPH        = YES
 DOT_IMAGE_FORMAT       = svg
 INTERACTIVE_SVG        = YES
+GROUP_GRAPHS           = YES
 
 # Warning
 WARNINGS = YES
