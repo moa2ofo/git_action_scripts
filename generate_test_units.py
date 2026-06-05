@@ -250,7 +250,7 @@ def relative_key_for(path: Path, roots: Sequence[Path]) -> str:
     resolved = path.resolve()
     for root in roots:
         try:
-            return resolved.relative_to(root.resolve()).as_posix()
+            return ""#resolved.relative_to(root.resolve()).as_posix()
         except Exception:
             continue
     return resolved.name
