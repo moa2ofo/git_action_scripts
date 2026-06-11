@@ -30,6 +30,8 @@ class PathsConfig:
     sw_cmp_repo_cfg_dir: Path
     sw_cmp_workspace_pltf_dir: Path
     sw_cmp_repo_pltf_dir: Path
+    sw_cmp_workspace_stub_dir: Path
+    sw_cmp_repo_stub_dir: Path
 
 
 _REQUIRED_KEYS = {
@@ -52,6 +54,8 @@ _REQUIRED_KEYS = {
     "sw_cmp_repo_cfg_dir",
     "sw_cmp_workspace_pltf_dir",
     "sw_cmp_repo_pltf_dir",
+    "sw_cmp_workspace_stub_dir",
+    "sw_cmp_repo_stub_dir",
 }
 
 
@@ -111,4 +115,6 @@ def load_paths(current_file: str | Path, config_name: str = "path_cfg.yml") -> P
         sw_cmp_repo_cfg_dir=_resolve_path(script_dir, paths["sw_cmp_repo_cfg_dir"]),
         sw_cmp_workspace_pltf_dir=_resolve_path(script_dir, paths["sw_cmp_workspace_pltf_dir"]),
         sw_cmp_repo_pltf_dir=_resolve_path(script_dir, paths["sw_cmp_repo_pltf_dir"]),
+        sw_cmp_workspace_stub_dir=_resolve_path(script_dir, paths["sw_cmp_workspace_stub_dir"]),
+        sw_cmp_repo_stub_dir=_resolve_path(script_dir, paths["sw_cmp_repo_stub_dir"]),
     )
