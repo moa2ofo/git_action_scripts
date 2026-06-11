@@ -646,6 +646,7 @@ def main():
     scan_roots: List[Path] = [
         paths.sw_cmp_repo_pltf_dir,
         paths.sw_cmp_repo_cfg_dir,
+        paths.sw_cmp_repo_stub_dir,
     ]
 
     # Clang args.
