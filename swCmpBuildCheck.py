@@ -368,6 +368,9 @@ def main():
     delete_file(PATHS.sw_cmp_repo_report_file)
     copy_entire_folder(PATHS.sw_cmp_repo_cfg_dir, PATHS.sw_cmp_workspace_cfg_dir, overwrite=True)
     copy_entire_folder(PATHS.sw_cmp_repo_pltf_dir, PATHS.sw_cmp_workspace_pltf_dir, overwrite=True)
+    copy_entire_folder(PATHS.sw_cmp_repo_pltf_dir, PATHS.sw_cmp_workspace_stub_dir, overwrite=True)
+
+    
     created: list[Path] = []
     try:
         created = scan_components(repo_root, template_content)
@@ -388,6 +391,7 @@ def main():
     # Cleanup temporary cfg/pltf in workspace
     delete_folder(PATHS.sw_cmp_workspace_cfg_dir)
     delete_folder(PATHS.sw_cmp_workspace_pltf_dir)
+    delete_folder(PATHS.sw_cmp_workspace_stub_dir)
     info("Done.")
 
 

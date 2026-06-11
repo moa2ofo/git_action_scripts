@@ -18,3 +18,5 @@ paths:
   sw_cmp_repo_cfg_dir: ../dev/cfg
   sw_cmp_workspace_pltf_dir: pltf
   sw_cmp_repo_pltf_dir: ../dev/pltf
+  sw_cmp_workspace_stub_dir: stub
+  sw_cmp_repo_stub_dir: ../dev/stub

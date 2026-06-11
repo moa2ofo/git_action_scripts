@@ -13,6 +13,7 @@ add_library(new STATIC ${SOURCES})
 target_include_directories(new PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/pltf
     ${CMAKE_CURRENT_SOURCE_DIR}/cfg
+    ${CMAKE_CURRENT_SOURCE_DIR}/stub
 )
 
 target_compile_options(new PRIVATE
