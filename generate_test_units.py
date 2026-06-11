@@ -580,7 +580,21 @@ def create_stub_test_file(
     """
     test_identifier = make_c_identifier(display_fn_name)
 
+
+    header = f"""/**
+    * @file test/unitTest/TEST_{test_identifier}/test/test_{test_identifier}.c
+    * @brief Unit tests for {test_identifier}.
+    *
+    * @anchor UT_{test_identifier}
+    *
+    * @details
+    * This file contains the Unity unit test stub for the SW unit
+    * {test_identifier}.
+    */
+    """
+
     test_c = [
+        header,
         f'#include "{display_fn_name}.h"',
         '#include "unity.h"',
         "",
