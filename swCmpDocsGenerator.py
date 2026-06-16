@@ -124,7 +124,7 @@ def main():
             patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
             print("   - Building Docker image...")
-            run_cmd(["docker", "build", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
+            run_cmd(["docker", "build", "--no-cache", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
 
             mount = docker_mount_path(target_dir)
             print(f"   - Running Doxygen in Docker (mount: {mount})")
