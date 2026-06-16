@@ -129,13 +129,17 @@ def main():
             mount = docker_mount_path(target_dir)
             print(f"   - Running Doxygen in Docker (mount: {mount})")
 
+
             print("   - Checking doxygen version...")
 
-            run_cmd([
+            proc = subprocess.run([
                 "docker", "run", "--rm",
                 IMAGE_NAME,
                 "doxygen", "--version"
-            ], cwd=target_dir, check=True)
+            ], cwd=target_dir)
+
+            if proc.returncode != 0:
+                raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
             run_cmd([
                 "docker", "run", "--rm",
