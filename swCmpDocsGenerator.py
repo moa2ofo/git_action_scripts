@@ -118,7 +118,7 @@ def main():
             shutil.copy2(template_doxyfile, dest_doxyfile)
 
             # Patch Doxyfile
-            #patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
+            patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
 
             print("   - Building Docker image...")
