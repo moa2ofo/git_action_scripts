@@ -100,7 +100,7 @@ def main():
         has_cfg = (target_dir / "cfg").is_dir()
         project_name = target_dir.parent.name
 
-        dest_dockerfile = target_dir / DOCKERFILE
+
         dest_doxyfile = target_dir / DOXYFILE
 
         docker_backup = None
@@ -108,23 +108,19 @@ def main():
 
         try:
             # Backups
-            if dest_dockerfile.exists():
-                docker_backup = target_dir / (DOCKERFILE + ".bak")
-                shutil.move(str(dest_dockerfile), str(docker_backup))
+
 
             if dest_doxyfile.exists():
                 doxy_backup = target_dir / (DOXYFILE + ".bak")
                 shutil.move(str(dest_doxyfile), str(doxy_backup))
 
             # Copy templates
-            shutil.copy2(template_dockerfile, dest_dockerfile)
+
             shutil.copy2(template_doxyfile, dest_doxyfile)
 
             # Patch Doxyfile
             patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
-            print("   - Dockerfile used by docker build:")
-            print(dest_dockerfile.read_text(encoding="utf-8", errors="replace"))
 
             print("   - Building Docker image...")
             run_cmd(["docker", "build", "--no-cache", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
