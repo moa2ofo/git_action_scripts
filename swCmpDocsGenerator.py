@@ -54,7 +54,7 @@ def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: 
         inputs.append("./cfg")
     if has_pltf:
         inputs.append("./pltf")
-
+    inputs.append("./test")
     # Override INPUT line
     input_line = "INPUT                  = " + " ".join(inputs)
     content = re.sub(r"^\s*INPUT\s*=.*$\n?", "", content, flags=re.MULTILINE)
@@ -118,7 +118,7 @@ def main():
             shutil.copy2(template_doxyfile, dest_doxyfile)
 
             # Patch Doxyfile
-            patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
+            #patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
 
             print("   - Building Docker image...")
