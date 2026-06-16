@@ -123,6 +123,9 @@ def main():
             # Patch Doxyfile
             patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
+            print("   - Dockerfile used by docker build:")
+            print(dest_dockerfile.read_text(encoding="utf-8", errors="replace"))
+
             print("   - Building Docker image...")
             run_cmd(["docker", "build", "--no-cache", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
 
