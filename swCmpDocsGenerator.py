@@ -129,6 +129,14 @@ def main():
             mount = docker_mount_path(target_dir)
             print(f"   - Running Doxygen in Docker (mount: {mount})")
 
+            print("   - Checking doxygen version...")
+
+            run_cmd([
+                "docker", "run", "--rm",
+                IMAGE_NAME,
+                "doxygen", "--version"
+            ], cwd=target_dir, check=True)
+
             run_cmd([
                 "docker", "run", "--rm",
                 "-v", f"{mount}:/workspace",
