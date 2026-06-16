@@ -28,7 +28,7 @@ from common_utils import (
 IMAGE_NAME = "doxygen-plantuml"
 
 
-DOCKERFILE = "Dockerfile"
+DOCKERFILE = "DoxDockerfile"
 DOXYFILE = "Doxyfile"
 
 
@@ -103,7 +103,6 @@ def main():
 
         dest_doxyfile = target_dir / DOXYFILE
 
-        docker_backup = None
         doxy_backup = None
 
         try:
@@ -123,8 +122,17 @@ def main():
 
 
             print("   - Building Docker image...")
-            run_cmd(["docker", "build", "--no-cache", "-t", IMAGE_NAME, "."], cwd=target_dir, check=True)
-
+            run_cmd(
+                [
+                    "docker", "build",
+                    "--no-cache",
+                    "-t", IMAGE_NAME,
+                    "-f", str(template_dockerfile),
+                    str(script_dir),
+                ],
+                cwd=script_dir,
+                check=True,
+            )
             mount = docker_mount_path(target_dir)
             print(f"   - Running Doxygen in Docker (mount: {mount})")
 
