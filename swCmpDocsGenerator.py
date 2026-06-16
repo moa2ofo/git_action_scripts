@@ -162,9 +162,7 @@ def main():
 
         finally:
             # Cleanup
-            safe_unlink(dest_dockerfile)
             safe_unlink(dest_doxyfile)
-            safe_restore(docker_backup, dest_dockerfile)
             safe_restore(doxy_backup, dest_doxyfile)
             print("   - Cleanup done.")
 
