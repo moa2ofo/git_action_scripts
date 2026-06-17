@@ -322,10 +322,10 @@ def scan_components(codebase_root: Path, template_content: str) -> list[Path]:
     return created
 
 
+
 def build_and_run_docker(script_dir: Path) -> None:
     script_dir = Path(script_dir).resolve()
-    info("Building Docker image: cmake-misra-multi")
-    run_cmd(["docker", "build", "-t", "cmake-misra-multi", "."], cwd=script_dir, check=True)
+    image_name = "llvm-c-parser:latest"
 
     cwd = str(script_dir)
     info(f"Running analysis container with workspace: {cwd}")
@@ -333,13 +333,12 @@ def build_and_run_docker(script_dir: Path) -> None:
         [
             "docker", "run", "--rm",
             "-v", f"{cwd}:/workspace",
-            "cmake-misra-multi",
+            image_name,
             "bash", "-lc",
             "build-and-check-all.sh"
         ],
         check=True,
     )
-
 
 def generate_reports(codebase_root: Path, misra_rules_path: Path) -> None:
     info(f"Using MISRA rules file: {misra_rules_path}")
