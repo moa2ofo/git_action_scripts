@@ -34,21 +34,22 @@ RUN apt-get update && \
         python3-clang-17 \
         libclang-17-dev \
         ca-certificates \
-        doxygen \
         graphviz \
         openjdk-17-jre-headless \
         wget \
     && rm -rf /var/lib/apt/lists/*
 
-RUN which doxygen && doxygen --version
 
-# symlink for libclang expected by python bindings
-RUN LIBCLANG=$(find /usr/lib -name "libclang.so" | head -n 1) && \
-    if [ -n "$LIBCLANG" ]; then \
-        ln -sf "$LIBCLANG" /usr/local/lib/libclang.so; \
-    else \
-        echo "libclang.so not found" >&2; exit 1; \
-    fi
+# Doxygen (manual install newer version)
+# ------------------------------------------------------------
+RUN wget -q https://www.doxygen.nl/files/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
+    tar -xzf doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
+    mv doxygen-${DOXYGEN_VERSION}/bin/doxygen /usr/local/bin/doxygen && \
+    chmod +x /usr/local/bin/doxygen && \
+    rm -rf doxygen-${DOXYGEN_VERSION}*   
+
+
+RUN which doxygen && doxygen --version
 
 # ------------------------------------------------------------
 # PlantUML setup
@@ -68,8 +69,14 @@ RUN printf '%s\n' \
     > /usr/local/bin/plantuml && \
     chmod +x /usr/local/bin/plantuml
 
-# quick sanity check
-RUN doxygen --version && plantuml -version && dot -V
+    # symlink for libclang expected by python bindings
+RUN LIBCLANG=$(find /usr/lib -name "libclang.so" | head -n 1) && \
+    if [ -n "$LIBCLANG" ]; then \
+        ln -sf "$LIBCLANG" /usr/local/lib/libclang.so; \
+    else \
+        echo "libclang.so not found" >&2; exit 1; \
+    fi
+
 
 WORKDIR /workspace
 
