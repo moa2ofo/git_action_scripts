@@ -4,6 +4,10 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV DOXYGEN_VERSION=1.15.0
+
+
+
 # ------------------------------------------------------------
 # Common install: toolchain, Python, dev tools + doxygen/graphviz/java
 # ------------------------------------------------------------
@@ -39,11 +43,16 @@ RUN apt-get update && \
         libclang-17-dev \
         # doxygen + graphviz + Java for PlantUML
         ca-certificates \
-        doxygen \
         graphviz \
         openjdk-17-jre-headless \
         wget \
     && rm -rf /var/lib/apt/lists/*
+
+  RUN wget -q https://www.doxygen.nl/files/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
+    tar -xzf doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
+    mv doxygen-${DOXYGEN_VERSION}/bin/doxygen /usr/local/bin/doxygen && \
+    chmod +x /usr/local/bin/doxygen && \
+    rm -rf doxygen-${DOXYGEN_VERSION}*
 
 # symlink for libclang expected by python bindings
 RUN LIBCLANG=$(find /usr/lib -name "libclang.so" | head -n 1) && \

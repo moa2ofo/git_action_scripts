@@ -9,7 +9,6 @@ import shutil
 import subprocess
 from pathlib import Path
 import sys
-from typing import  List, Tuple
 from path_config_loader import load_paths
 
 from common_utils import (
@@ -25,10 +24,12 @@ from common_utils import (
     exit_code_from_failures
 )
 
-IMAGE_NAME = "doxygen-plantuml"
+# This image is expected to be pulled from GHCR and locally tagged by the CI:
+# docker pull ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:latest
+# docker tag ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:latest llvm-c-parser:latest
+IMAGE_NAME = "llvm-c-parser:latest"
 
 
-DOCKERFILE = "DoxDockerfile"
 DOXYFILE = "Doxyfile"
 
 
@@ -70,10 +71,8 @@ def main():
     script_dir = paths.script_dir
     codebase_root = paths.sw_cmp_repo_root
 
-    template_dockerfile = script_dir / DOCKERFILE
     template_doxyfile = script_dir / DOXYFILE
 
-    info(f"Template Dockerfile : {template_dockerfile}")
     info(f"Template Doxyfile   : {template_doxyfile}")
     info(f"Scanning targets in : {codebase_root}")
 
@@ -121,19 +120,8 @@ def main():
             patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
 
 
-            print("   - Building Docker image...")
-            run_cmd(
-                [
-                    "docker", "build",
-                    "--no-cache",
-                    "-t", IMAGE_NAME,
-                    "-f", str(template_dockerfile),
-                    str(script_dir),
-                ],
-                cwd=script_dir,
-                check=True,
-            )
             mount = docker_mount_path(target_dir)
+            print(f"   - Using prebuilt Docker image: {IMAGE_NAME}")
             print(f"   - Running Doxygen in Docker (mount: {mount})")
 
 
