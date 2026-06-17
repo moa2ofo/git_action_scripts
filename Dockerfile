@@ -17,6 +17,10 @@ RUN apt-get update && \
         gcc \
         g++ \
         git \
+        bison \
+        flex \
+        make \
+        perl \
         pkg-config \
         bear \
         clang \
@@ -44,11 +48,14 @@ RUN apt-get update && \
 
 # Doxygen (manual install newer version)
 # ------------------------------------------------------------
-RUN wget -q https://www.doxygen.nl/files/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
-    tar -xzf doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
-    mv doxygen-${DOXYGEN_VERSION}/bin/doxygen /usr/local/bin/doxygen && \
-    chmod +x /usr/local/bin/doxygen && \
-    rm -rf doxygen-${DOXYGEN_VERSION}*   
+RUN wget -q -O /tmp/doxygen.tar.gz \
+      https://github.com/doxygen/doxygen/archive/refs/tags/Release_${DOXYGEN_VERSION//./_}.tar.gz && \
+    mkdir -p /tmp/doxygen-src /tmp/doxygen-build && \
+    tar -xzf /tmp/doxygen.tar.gz -C /tmp/doxygen-src --strip-components=1 && \
+    cmake -S /tmp/doxygen-src -B /tmp/doxygen-build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/doxygen-build --parallel "$(nproc)" && \
+    cmake --install /tmp/doxygen-build && \
+    rm -rf /tmp/doxygen.tar.gz /tmp/doxygen-src /tmp/doxygen-build
 
 
 RUN which doxygen && doxygen --version
