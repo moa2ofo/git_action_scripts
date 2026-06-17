@@ -2,6 +2,8 @@
 
 FROM ubuntu:24.04
 
+ENV DOXYGEN_VERSION=1.15.0
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ------------------------------------------------------------
