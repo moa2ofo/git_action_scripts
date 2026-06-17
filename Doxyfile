@@ -5,7 +5,7 @@ GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 
 # Inputs (IMPORTANT: single INPUT line, or use +=)
-INPUT                  = ./cfg ./pltf ./test/unitTest
+INPUT                  = ./cfg ./pltf ../test/unitTest
 FILE_PATTERNS          = *.c *.h
 RECURSIVE              = YES
 

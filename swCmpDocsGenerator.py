@@ -33,7 +33,7 @@ IMAGE_NAME = "llvm-c-parser:latest"
 DOXYFILE = "Doxyfile"
 
 
-def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: bool) -> None:
+def patch_doxyfile(doxy_path: Path, project_name: str) -> None:
     # Read existing Doxyfile
     content = doxy_path.read_text(encoding="utf-8", errors="replace")
 
@@ -49,21 +49,8 @@ def patch_doxyfile(doxy_path: Path, project_name: str, has_pltf: bool, has_cfg: 
         # If missing, prepend it
         content = f'PROJECT_NAME           = "{project_name}"\n' + content
 
-    # Build INPUT path list based on available subfolders
-    inputs = []
-    if has_cfg:
-        inputs.append("./cfg")
-    if has_pltf:
-        inputs.append("./pltf")
-    inputs.append("./test")
-    # Override INPUT line
-    input_line = "INPUT                  = " + " ".join(inputs)
-    content = re.sub(r"^\s*INPUT\s*=.*$\n?", "", content, flags=re.MULTILINE)
-    content = input_line + "\n" + content
-
     # Write patched file
     doxy_path.write_text(content, encoding="utf-8")
-
 import time
 
 def main():
@@ -117,7 +104,7 @@ def main():
             shutil.copy2(template_doxyfile, dest_doxyfile)
 
             # Patch Doxyfile
-            patch_doxyfile(dest_doxyfile, project_name, has_pltf, has_cfg)
+            patch_doxyfile(dest_doxyfile, project_name)
 
 
             mount = docker_mount_path(target_dir)
