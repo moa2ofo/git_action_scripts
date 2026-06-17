@@ -34,6 +34,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          no-cache: true
           tags: |
             ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:latest
             ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:${{ github.sha }}

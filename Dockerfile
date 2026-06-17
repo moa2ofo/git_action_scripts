@@ -3,6 +3,7 @@
 FROM ubuntu:24.04
 
 ENV DOXYGEN_VERSION=1.15.0
+ENV DOXYGEN_TAG=Release_1_15_0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -43,19 +44,24 @@ RUN apt-get update && \
         graphviz \
         openjdk-17-jre-headless \
         wget \
+        file \
     && rm -rf /var/lib/apt/lists/*
 
 
 # Doxygen (manual install newer version)
 # ------------------------------------------------------------
-RUN wget -q -O /tmp/doxygen.tar.gz \
-      https://github.com/doxygen/doxygen/archive/refs/tags/Release_${DOXYGEN_VERSION//./_}.tar.gz && \
-    mkdir -p /tmp/doxygen-src /tmp/doxygen-build && \
-    tar -xzf /tmp/doxygen.tar.gz -C /tmp/doxygen-src --strip-components=1 && \
-    cmake -S /tmp/doxygen-src -B /tmp/doxygen-build -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build /tmp/doxygen-build --parallel "$(nproc)" && \
-    cmake --install /tmp/doxygen-build && \
-    rm -rf /tmp/doxygen.tar.gz /tmp/doxygen-src /tmp/doxygen-build
+RUN set -eux; \
+    wget -q -O /tmp/doxygen.tar.gz \
+      "https://github.com/doxygen/doxygen/archive/refs/tags/${DOXYGEN_TAG}.tar.gz"; \
+    mkdir -p /tmp/doxygen-src /tmp/doxygen-build; \
+    tar -xzf /tmp/doxygen.tar.gz -C /tmp/doxygen-src --strip-components=1; \
+    cmake -S /tmp/doxygen-src -B /tmp/doxygen-build -DCMAKE_BUILD_TYPE=Release; \
+    cmake --build /tmp/doxygen-build --parallel "$(nproc)"; \
+    cmake --install /tmp/doxygen-build; \
+    rm -rf /tmp/doxygen.tar.gz /tmp/doxygen-src /tmp/doxygen-build; \
+    which doxygen; \
+    file "$(which doxygen)"; \
+    doxygen --version
 
 
 RUN which doxygen && doxygen --version
