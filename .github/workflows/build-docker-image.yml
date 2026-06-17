@@ -69,11 +69,7 @@ jobs:
             clang --version
 
             echo "=== libclang ==="
-            python3 - <<'"'"'PY'"'"'
-            import clang.cindex
-            print("clang Python bindings OK")
-            print(clang.cindex.Config.library_path)
-            PY
+            python3 -c '"'"'import clang.cindex; print("clang Python bindings OK"); print(clang.cindex.Config.library_path)'"'"'
 
             echo "=== Cppcheck ==="
             cppcheck --version
