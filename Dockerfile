@@ -18,10 +18,6 @@ RUN apt-get update && \
         gcc \
         g++ \
         git \
-        bison \
-        flex \
-        make \
-        perl \
         pkg-config \
         bear \
         clang \
@@ -41,27 +37,11 @@ RUN apt-get update && \
         python3-clang-17 \
         libclang-17-dev \
         ca-certificates \
+        doxygen \
         graphviz \
         openjdk-17-jre-headless \
         wget \
-        file \
     && rm -rf /var/lib/apt/lists/*
-
-
-# Doxygen (manual install newer version)
-# ------------------------------------------------------------
-RUN set -eux; \
-    wget -q -O /tmp/doxygen.tar.gz \
-      "https://github.com/doxygen/doxygen/archive/refs/tags/${DOXYGEN_TAG}.tar.gz"; \
-    mkdir -p /tmp/doxygen-src /tmp/doxygen-build; \
-    tar -xzf /tmp/doxygen.tar.gz -C /tmp/doxygen-src --strip-components=1; \
-    cmake -S /tmp/doxygen-src -B /tmp/doxygen-build -DCMAKE_BUILD_TYPE=Release; \
-    cmake --build /tmp/doxygen-build --parallel "$(nproc)"; \
-    cmake --install /tmp/doxygen-build; \
-    rm -rf /tmp/doxygen.tar.gz /tmp/doxygen-src /tmp/doxygen-build; \
-    which doxygen; \
-    file "$(which doxygen)"; \
-    doxygen --version
 
 
 RUN which doxygen && doxygen --version

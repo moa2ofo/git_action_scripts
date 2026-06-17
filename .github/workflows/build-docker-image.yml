@@ -28,6 +28,60 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build image locally for validation
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          no-cache: true
+          tags: |
+            llvm-c-parser:test
+
+      - name: Debug image tools
+        run: |
+          set -eux
+
+          docker image inspect llvm-c-parser:test
+
+          docker run --rm llvm-c-parser:test bash -lc '
+            set -eux
+
+            echo "=== OS ==="
+            cat /etc/os-release
+
+            echo "=== Doxygen ==="
+            which doxygen
+            doxygen --version
+
+            echo "=== Graphviz ==="
+            which dot
+            dot -V
+
+            echo "=== PlantUML ==="
+            which plantuml
+            plantuml -version || true
+
+            echo "=== Python ==="
+            python3 --version
+
+            echo "=== Clang ==="
+            clang --version
+
+            echo "=== libclang ==="
+            python3 - <<'"'"'PY'"'"'
+            import clang.cindex
+            print("clang Python bindings OK")
+            print(clang.cindex.Config.library_path)
+            PY
+
+            echo "=== Cppcheck ==="
+            cppcheck --version
+
+            echo "=== Java ==="
+            java -version
+          '
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
@@ -38,3 +92,4 @@ jobs:
           tags: |
             ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:latest
             ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:${{ github.sha }}
+
