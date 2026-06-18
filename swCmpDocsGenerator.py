@@ -3,23 +3,19 @@
 
 from __future__ import annotations
 
-
 import re
 import shutil
 import subprocess
 from pathlib import Path
 import sys
+import time
+
 from path_config_loader import load_paths
 
 from common_utils import (
-    info, warn, error, fatal,
-    require_python, require_command, require_dir, require_file,
-    require_docker_running,
+    info, warn, error,
     run_cmd, docker_mount_path,
     safe_unlink, safe_restore,
-    find_targets_with_subfolders,
-    preflight_check,
-    resolve_template,
     print_summary,
     exit_code_from_failures
 )
@@ -29,15 +25,18 @@ from common_utils import (
 # docker tag ghcr.io/moa2ofo/git_action_scripts/llvm-c-parser:latest llvm-c-parser:latest
 IMAGE_NAME = "llvm-c-parser:latest"
 
-
 DOXYFILE = "Doxyfile"
 
 
 def patch_doxyfile(doxy_path: Path, project_name: str) -> None:
-    # Read existing Doxyfile
+    """
+    Patch only PROJECT_NAME.
+
+    The INPUT paths are already defined inside the Doxyfile template,
+    so this function must not modify INPUT.
+    """
     content = doxy_path.read_text(encoding="utf-8", errors="replace")
 
-    # Force PROJECT_NAME to the target folder name
     if re.search(r"^\s*PROJECT_NAME\s*=", content, flags=re.MULTILINE):
         content = re.sub(
             r"^\s*PROJECT_NAME\s*=.*$",
@@ -46,113 +45,106 @@ def patch_doxyfile(doxy_path: Path, project_name: str) -> None:
             flags=re.MULTILINE,
         )
     else:
-        # If missing, prepend it
         content = f'PROJECT_NAME           = "{project_name}"\n' + content
 
-    # Write patched file
     doxy_path.write_text(content, encoding="utf-8")
-import time
+
 
 def main():
     paths = load_paths(__file__)
     script_dir = paths.script_dir
-    codebase_root = paths.sw_cmp_repo_root
+    codebase_root = paths.project_root
 
     template_doxyfile = script_dir / DOXYFILE
+    dest_doxyfile = codebase_root / DOXYFILE
+
+    project_name = codebase_root.name
 
     info(f"Template Doxyfile   : {template_doxyfile}")
-    info(f"Scanning targets in : {codebase_root}")
-
-    # Find all targets
-    targets = list(find_targets_with_subfolders(codebase_root, ("pltf", "cfg")))
-    # Filter out CMakeFiles
-    targets = [t for t in targets if "CMakeFiles" not in t.parts]
-
-    if not targets:
-        warn("No folders found containing 'pltf' or 'cfg'. Nothing to do.")
-        return
-
-    total = len(targets)
-    print(f"\n=== Found {total} valid targets ===\n")
+    info(f"Codebase root       : {codebase_root}")
+    info(f"Destination Doxyfile: {dest_doxyfile}")
 
     ok_targets = []
     fail_targets = []
 
-    for idx, target_dir in enumerate(targets, start=1):
-        print(f"\n>>> [{idx}/{total}] Processing target: {target_dir}")
-        start_time = time.time()
+    doxy_backup = None
+    start_time = time.time()
 
-        has_pltf = (target_dir / "pltf").is_dir()
-        has_cfg = (target_dir / "cfg").is_dir()
-        project_name = target_dir.parent.name
+    try:
+        if not template_doxyfile.is_file():
+            raise FileNotFoundError(f"Template Doxyfile not found: {template_doxyfile}")
 
+        if not codebase_root.is_dir():
+            raise NotADirectoryError(f"Codebase root not found: {codebase_root}")
 
-        dest_doxyfile = target_dir / DOXYFILE
+        # Backup existing Doxyfile in codebase_root, if present
+        if dest_doxyfile.exists():
+            doxy_backup = codebase_root / (DOXYFILE + ".bak")
+            shutil.move(str(dest_doxyfile), str(doxy_backup))
 
-        doxy_backup = None
+        # Copy template Doxyfile into codebase_root
+        shutil.copy2(template_doxyfile, dest_doxyfile)
 
-        try:
-            # Backups
+        # Patch only PROJECT_NAME.
+        # INPUT is not modified because the Doxyfile already contains all paths.
+        patch_doxyfile(dest_doxyfile, project_name)
 
+        mount = docker_mount_path(codebase_root)
 
-            if dest_doxyfile.exists():
-                doxy_backup = target_dir / (DOXYFILE + ".bak")
-                shutil.move(str(dest_doxyfile), str(doxy_backup))
+        print(f"   - Using prebuilt Docker image: {IMAGE_NAME}")
+        print(f"   - Running Doxygen in Docker from codebase_root")
+        print(f"   - Docker mount: {mount}")
 
-            # Copy templates
+        print("   - Checking doxygen version...")
 
-            shutil.copy2(template_doxyfile, dest_doxyfile)
-
-            # Patch Doxyfile
-            patch_doxyfile(dest_doxyfile, project_name)
-
-
-            mount = docker_mount_path(target_dir)
-            print(f"   - Using prebuilt Docker image: {IMAGE_NAME}")
-            print(f"   - Running Doxygen in Docker (mount: {mount})")
-
-
-            print("   - Checking doxygen version...")
-
-            proc = subprocess.run([
+        proc = subprocess.run(
+            [
                 "docker", "run", "--rm",
                 IMAGE_NAME,
                 "doxygen", "--version"
-            ], cwd=target_dir)
+            ],
+            cwd=codebase_root
+        )
 
-            if proc.returncode != 0:
-                raise subprocess.CalledProcessError(proc.returncode, proc.args)
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
-            run_cmd([
+        run_cmd(
+            [
                 "docker", "run", "--rm",
                 "-v", f"{mount}:/workspace",
                 IMAGE_NAME,
                 "doxygen", "/workspace/Doxyfile"
-            ], cwd=target_dir, check=True)
+            ],
+            cwd=codebase_root,
+            check=True
+        )
 
-            info("   [OK] Documentation generated.")
-            ok_targets.append(target_dir)
+        info("   [OK] Documentation generated.")
+        ok_targets.append(codebase_root)
 
-        except subprocess.CalledProcessError as e:
-            msg = f"Command failed (exit={e.returncode})"
-            error(f"   [FAIL] {target_dir}: {msg}")
-            fail_targets.append((target_dir, msg))
+    except subprocess.CalledProcessError as e:
+        msg = f"Command failed (exit={e.returncode})"
+        error(f"   [FAIL] {codebase_root}: {msg}")
+        fail_targets.append((codebase_root, msg))
 
-        except Exception as e:
-            msg = f"Unexpected error: {repr(e)}"
-            error(f"   [FAIL] {target_dir}: {msg}")
-            fail_targets.append((target_dir, msg))
+    except Exception as e:
+        msg = f"Unexpected error: {repr(e)}"
+        error(f"   [FAIL] {codebase_root}: {msg}")
+        fail_targets.append((codebase_root, msg))
 
-        finally:
-            # Cleanup
-            safe_unlink(dest_doxyfile)
-            safe_restore(doxy_backup, dest_doxyfile)
-            print("   - Cleanup done.")
+    finally:
+        # Cleanup temporary Doxyfile and restore original one, if it existed
+        safe_unlink(dest_doxyfile)
+        safe_restore(doxy_backup, dest_doxyfile)
+        print("   - Cleanup done.")
 
-        elapsed = time.time() - start_time
-        print(f"<<< Completed [{idx}/{total}] in {elapsed:.1f}s")
+    elapsed = time.time() - start_time
+    print(f"<<< Completed in {elapsed:.1f}s")
 
     print_summary("FINAL SUMMARY", ok_targets, fail_targets)
     sys.exit(exit_code_from_failures(fail_targets))
+
+
 if __name__ == "__main__":
     main()
